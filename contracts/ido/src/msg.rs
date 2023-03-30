@@ -213,7 +213,7 @@ pub enum QueryAnswer {
         soft_cap: Uint128,
         withdrawn: bool,
         shared_whitelist: bool,
-        remaining_per_tiers: Vec<u128>,
+        remaining_per_tiers: Vec<Uint128>,
     },
     InWhitelist {
         in_whitelist: bool,
