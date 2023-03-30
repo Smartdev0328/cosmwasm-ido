@@ -210,8 +210,10 @@ pub enum QueryAnswer {
         sold_amount: Uint128,
         total_tokens_amount: Uint128,
         total_payment: Uint128,
+        soft_cap: Uint128,
         withdrawn: bool,
         shared_whitelist: bool,
+        remaining_per_tiers: Vec<u128>,
     },
     InWhitelist {
         in_whitelist: bool,

@@ -220,6 +220,11 @@ impl Ido {
             }
         };
 
+        // let mut remaining_per_tiers: Vec<u128> = vec![];
+        // for tier in 1..=(self.remaining_tokens_per_tier.len() as u8) {
+        //     let remaining_amount = self.clone().remaining_tokens_per_tier(tier);
+        //     remaining_per_tiers.push(remaining_amount.clone());
+        // }
         Ok(QueryAnswer::IdoInfo {
             admin,
             start_time: self.start_time,
@@ -228,10 +233,12 @@ impl Ido {
             token_contract_hash: self.token_contract_hash,
             price: Uint128(self.price),
             payment,
+            remaining_per_tiers: self.remaining_tokens_per_tier,
             participants: self.participants,
             sold_amount: Uint128(self.sold_amount),
             total_tokens_amount: Uint128(self.total_tokens_amount),
             total_payment: Uint128(self.total_payment),
+            soft_cap: Uint128(self.soft_cap),
             withdrawn: self.withdrawn,
             shared_whitelist: self.shared_whitelist,
         })
