@@ -204,38 +204,36 @@ impl Ido {
         min(remaining_tokens_per_tier, remaining_total_amount)
     }
 
-    pub fn to_answer<A: Api>(self, api: &A) -> StdResult<QueryAnswer> {
+    pub fn to_answer<A: Api>(&self, api: &A) -> StdResult<QueryAnswer> {
         let admin = api.human_address(&self.admin)?;
         let token_contract = api.human_address(&self.token_contract)?;
 
         let payment = if self.is_native_payment() {
             PaymentMethod::Native
         } else {
-            let payment_contract = api.human_address(&self.payment_token_contract.unwrap())?;
-            let payment_contract_hash = self.payment_token_hash.unwrap();
+            let payment_contract =
+                api.human_address(&self.payment_token_contract.clone().unwrap())?;
+            let payment_contract_hash = self.payment_token_hash.clone().unwrap();
 
             PaymentMethod::Token {
                 contract: payment_contract,
                 code_hash: payment_contract_hash,
             }
         };
-        // self.remaining_tokens();
         let mut remaining_per_tiers: Vec<Uint128> = vec![];
         for tier in 1..=(self.remaining_tokens_per_tier.len() as u8) {
-            let tier_index = tier.checked_sub(1).unwrap() as usize;
-            let remaining_tokens_per_tier = self.remaining_tokens_per_tier[tier_index];
-            remaining_per_tiers.push(Uint128(remaining_tokens_per_tier))
+            remaining_per_tiers.push(Uint128(self.remaining_tokens_per_tier(tier)));
         }
         Ok(QueryAnswer::IdoInfo {
             admin,
             start_time: self.start_time,
             end_time: self.end_time,
             token_contract,
-            token_contract_hash: self.token_contract_hash,
+            token_contract_hash: self.token_contract_hash.clone(),
             price: Uint128(self.price),
             payment,
-            participants: self.participants,
             remaining_per_tiers,
+            participants: self.participants,
             sold_amount: Uint128(self.sold_amount),
             total_tokens_amount: Uint128(self.total_tokens_amount),
             total_payment: Uint128(self.total_payment),
