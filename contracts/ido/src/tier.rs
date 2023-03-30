@@ -253,10 +253,12 @@ mod tests {
     fn manual_tier() {
         let deps = mock_dependencies(20, &[]);
         let address = HumanAddr::from("address");
+        let tier = get_tier(&deps, address.clone(), None).unwrap();
 
         for i in 1..=4 {
             set_tier(i);
             assert_eq!(get_tier(&deps, address.clone(), None), Ok(i));
         }
+        set_tier(tier);
     }
 }

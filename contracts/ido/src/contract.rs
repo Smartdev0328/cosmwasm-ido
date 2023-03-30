@@ -69,6 +69,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
             token_contract_hash,
             price,
             total_amount,
+            soft_cap,
             tokens_per_tier,
             whitelist,
             payment,
@@ -85,6 +86,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
             ido.token_contract_hash = token_contract_hash;
             ido.price = price.u128();
             ido.total_tokens_amount = total_amount.u128();
+            ido.soft_cap = soft_cap.u128();
             ido.remaining_tokens_per_tier = tokens_per_tier.into_iter().map(|v| v.u128()).collect();
 
             if let PaymentMethod::Token {
@@ -198,6 +200,15 @@ fn start_ido<S: Storage, A: Api, Q: Querier>(
         return Err(StdError::generic_err("Ido ends in the past"));
     }
 
+    if ido.soft_cap == 0 {
+        return Err(StdError::generic_err("soft_cap should be initialized."));
+    }
+
+    if ido.soft_cap > ido.total_tokens_amount {
+        return Err(StdError::generic_err(
+            "soft_cap should be less than total amount",
+        ));
+    }
     ido.shared_whitelist = match whitelist {
         Whitelist::Shared { .. } => true,
         Whitelist::Empty { .. } => false,
@@ -793,6 +804,7 @@ mod tests {
             },
             price: Uint128(price),
             total_amount: Uint128(total_amount),
+            soft_cap: Uint128(total_amount),
             whitelist: Whitelist::Empty {
                 with: Some(whitelist),
             },
@@ -928,6 +940,7 @@ mod tests {
                 price: Uint128::from(1u128),
                 payment: PaymentMethod::Native,
                 total_amount: Uint128::from(100u128),
+                soft_cap: Uint128::from(90u128),
                 padding: None,
                 whitelist: Whitelist::Empty { with: None },
                 tokens_per_tier: vec![100u128, 100, 100, 100]
@@ -959,6 +972,7 @@ mod tests {
                 price: Uint128::from(1u128),
                 payment: PaymentMethod::Native,
                 total_amount: Uint128::from(100u128),
+                soft_cap: Uint128::from(90u128),
                 padding: None,
                 whitelist: Whitelist::Empty { with: None },
                 tokens_per_tier: vec![100u128, 100, 100, 100]
@@ -993,6 +1007,7 @@ mod tests {
             price: Uint128::from(1u128),
             payment: PaymentMethod::Native,
             total_amount: Uint128::from(100u128),
+            soft_cap: Uint128::from(90u128),
             padding: None,
             whitelist: Whitelist::Empty {
                 with: Some(allowed_addresses.clone()),
@@ -1045,6 +1060,7 @@ mod tests {
             price: Uint128::from(1u128),
             payment: PaymentMethod::Native,
             total_amount: Uint128::from(100u128),
+            soft_cap: Uint128::from(90u128),
             padding: None,
             whitelist: Whitelist::Shared {
                 with_blocked: Some(blocked_addresses.clone()),
@@ -1478,7 +1494,6 @@ mod tests {
             let tier_index = (tier - 1) as usize;
             let tokens_amount = ido.remaining_tokens_per_tier[tier_index];
             let scrt_amount = tokens_amount.checked_div(ido.price).unwrap();
-
             let mut env = mock_env(&user, &coins(scrt_amount + 10, USCRT));
             env.block.time = 5;
 

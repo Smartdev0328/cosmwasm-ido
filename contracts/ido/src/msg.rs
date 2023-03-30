@@ -71,6 +71,7 @@ pub enum HandleMsg {
         token_contract: HumanAddr,
         token_contract_hash: String,
         price: Uint128,
+        soft_cap: Uint128,
         payment: PaymentMethod,
         total_amount: Uint128,
         tokens_per_tier: Vec<Uint128>,

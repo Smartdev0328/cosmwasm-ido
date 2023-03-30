@@ -94,10 +94,9 @@ describe("IDO", () => {
 
   it("Deploy IDO contract", async () => {
     admin = await getAdmin(endpoint, chainId);
-    console.log(admin)
-    const validators = await admin.query.staking.validators({});
+    const validators = await admin.query.staking.validators({ status: "" });
+    console.log(validators)
     const validator = validators.validators![0].operator_address!;
-
     const initTierMsg: Tier.InitMsg = {
       validator,
       deposits: tierDeposits,
