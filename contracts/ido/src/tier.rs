@@ -85,7 +85,7 @@ mod query {
             nft_contract.clone(),
         )?;
         let token_list = tokens.tokens.iter();
-        let mut result_tier = 4;
+        let mut result_tier = 5;
         for token_id in token_list {
             let token_viewer = ViewerInfo {
                 address: address.clone(),

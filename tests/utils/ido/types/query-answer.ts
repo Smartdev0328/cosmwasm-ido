@@ -18,11 +18,11 @@ export type IdoAmount = {
 export type PaymentMethod =
   | "native"
   | {
-      token: {
-        contract: HumanAddr;
-        code_hash: string;
-      };
+    token: {
+      contract: HumanAddr;
+      code_hash: string;
     };
+  };
 
 export type IdoInfo = {
   ido_info: {
@@ -37,6 +37,7 @@ export type IdoInfo = {
     token_contract: HumanAddr;
     token_contract_hash: string;
     total_payment: Uint128;
+    soft_cap: Uint128;
     total_tokens_amount: Uint128;
     withdrawn: boolean;
   };

@@ -58,7 +58,7 @@ describe("IDO", () => {
 
   let idoContract: Ido.IdoContract;
 
-  const endpoint = "https://rpc.testnet.secretsaturn.net";
+  const endpoint = "https://api.pulsar.scrttestnet.com";
   const chainId = "pulsar-2";
 
   const tierContract = new Tier.Contract();
@@ -121,7 +121,7 @@ describe("IDO", () => {
   });
 
   it("Start IDO with empty whitelist", async () => {
-    idoOwner = await getUser(endpoint, chainId, 0);
+    idoOwner = await getAdmin(endpoint, chainId);
     await mintTo(idoOwner, idoTotalAmount, idoToken);
 
     price = 10;
@@ -138,6 +138,7 @@ describe("IDO", () => {
         token_contract_hash: idoToken.contractInfo.codeHash,
         price: price.toString(),
         total_amount: idoTotalAmount.toString(),
+        soft_cap: (idoTotalAmount / 2).toString(),
         tokens_per_tier: tokensPerTier,
         whitelist: { empty: {} },
         payment: {
@@ -163,6 +164,7 @@ describe("IDO", () => {
     assert.equal(idoInfo.token_contract_hash, idoToken.contractInfo.codeHash);
     assert.equal(idoInfo.price, price.toString());
     assert.equal(idoInfo.total_tokens_amount, idoTotalAmount.toString());
+    assert.equal(idoInfo.soft_cap, (idoTotalAmount / 2).toString());
     assert.equal(idoInfo.shared_whitelist, false);
     assert.equal(idoInfo.withdrawn, false);
     assert.equal(idoInfo.sold_amount, 0);
@@ -209,7 +211,7 @@ describe("IDO", () => {
         .slice(tierIndex)
         .reduce((sum, v) => sum + Number.parseInt(v), 0);
 
-      const totalPayment = totalTokensBought * price;
+      const totalPayment = totalTokensBought / price;
 
       const userInfo = await idoContract.userInfo(user);
       assert.equal(userInfo.user_info.total_payment, totalPayment);
@@ -304,6 +306,7 @@ describe("IDO", () => {
         token_contract_hash: idoToken.contractInfo.codeHash,
         price: price.toString(),
         total_amount: idoTotalAmount.toString(),
+        soft_cap: (idoTotalAmount / 2).toString(),
         tokens_per_tier: tokensPerTier,
         whitelist: { shared: {} },
         payment: {
@@ -493,6 +496,7 @@ describe("IDO", () => {
         token_contract_hash: idoToken.contractInfo.codeHash,
         price: price.toString(),
         total_amount: idoTotalAmount.toString(),
+        soft_cap: (idoTotalAmount / 2).toString(),
         tokens_per_tier: tokensPerTier,
         whitelist: { empty: { with: [user.address] } },
         payment: {
@@ -522,6 +526,7 @@ describe("IDO", () => {
         token_contract_hash: idoToken.contractInfo.codeHash,
         price: price.toString(),
         total_amount: idoTotalAmount.toString(),
+        soft_cap: (idoTotalAmount / 2).toString(),
         payment: "native",
         whitelist: { empty: {} },
         tokens_per_tier: tokensPerTier,

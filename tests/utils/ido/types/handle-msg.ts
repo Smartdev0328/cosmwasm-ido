@@ -15,19 +15,19 @@ export type ChangeStatus = {
 export type PaymentMethod =
   | "native"
   | {
-      token: {
-        contract: HumanAddr;
-        code_hash: string;
-      };
+    token: {
+      contract: HumanAddr;
+      code_hash: string;
     };
+  };
 
 export type Whitelist =
   | {
-      empty: { with?: HumanAddr[] | null };
-    }
+    empty: { with?: HumanAddr[] | null };
+  }
   | {
-      shared: { with_blocked?: HumanAddr[] | null };
-    };
+    shared: { with_blocked?: HumanAddr[] | null };
+  };
 
 export type StartIdo = {
   start_ido: {
@@ -40,6 +40,7 @@ export type StartIdo = {
     token_contract_hash: string;
     tokens_per_tier: Uint128[];
     total_amount: Uint128;
+    soft_cap: Uint128;
     whitelist: Whitelist;
   };
 };

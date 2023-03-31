@@ -175,6 +175,10 @@ pub enum QueryMsg {
         address: HumanAddr,
         ido_id: Option<u32>,
     },
+    TierInfo {
+        address: HumanAddr,
+        viewing_key: Option<String>,
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -234,5 +238,8 @@ pub enum QueryAnswer {
         total_payment: Uint128,
         total_tokens_bought: Uint128,
         total_tokens_received: Uint128,
+    },
+    TierInfo {
+        tier: u8,
     },
 }

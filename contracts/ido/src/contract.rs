@@ -721,6 +721,13 @@ fn do_query<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>, msg: QueryMs
 
             user_info.to_answer()
         }
+        QueryMsg::TierInfo {
+            address,
+            viewing_key,
+        } => {
+            let tier = get_tier(deps, address, viewing_key)?;
+            QueryAnswer::TierInfo { tier }
+        }
     };
 
     to_binary(&response)
