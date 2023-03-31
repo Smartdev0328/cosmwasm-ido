@@ -241,5 +241,6 @@ pub enum QueryAnswer {
     },
     TierInfo {
         tier: u8,
+        nft_tier: u8,
     },
 }

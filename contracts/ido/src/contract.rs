@@ -4,7 +4,7 @@ use crate::{
         ResponseStatus, Whitelist,
     },
     state::{self, Config, Ido, Purchase},
-    tier::{get_min_tier, get_tier},
+    tier::{get_min_tier, get_tier, get_tier_from_nft_contract},
     utils::{self, assert_admin, assert_contract_active, assert_ido_admin},
 };
 use cosmwasm_std::{
@@ -276,7 +276,11 @@ fn buy_tokens<S: Storage, A: Api, Q: Querier>(
 
     let mut ido = Ido::load(&deps.storage, ido_id)?;
     if !ido.is_active(env.block.time) {
-        return Err(StdError::generic_err("IDO is not active"));
+        return Err(StdError::generic_err(format!(
+            "IDO is not active {}",
+            env.block.time,
+        )));
+        //  return Err(StdError::generic_err("IDO is not active"));
     }
 
     if ido.is_native_payment() {
@@ -725,8 +729,17 @@ fn do_query<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>, msg: QueryMs
             address,
             viewing_key,
         } => {
-            let tier = get_tier(deps, address, viewing_key)?;
-            QueryAnswer::TierInfo { tier }
+            let tier = get_tier(deps, address.clone(), viewing_key.clone())?;
+            let config = Config::load(&deps.storage)?;
+            let from_nft_contract = viewing_key
+                .clone()
+                .map(|viewing_key| get_tier_from_nft_contract(deps, &address, &config, viewing_key))
+                .unwrap_or(Ok(None))?;
+            let mut nft_tier = 5;
+            if let Some(value) = from_nft_contract {
+                nft_tier = value;
+            }
+            QueryAnswer::TierInfo { tier, nft_tier }
         }
     };
 

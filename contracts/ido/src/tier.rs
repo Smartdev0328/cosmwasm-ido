@@ -66,7 +66,7 @@ mod query {
         None
     }
 
-    fn get_tier_from_nft_contract<S: Storage, A: Api, Q: Querier>(
+    pub fn get_tier_from_nft_contract<S: Storage, A: Api, Q: Querier>(
         deps: &Extern<S, A, Q>,
         address: &HumanAddr,
         config: &Config,
@@ -230,6 +230,16 @@ pub mod manual {
         let tier_lock = MIN_TIER.lock().unwrap();
         Ok(*tier_lock)
     }
+
+    pub fn get_tier_from_nft_contract<S: Storage, A: Api, Q: Querier>(
+        _deps: &Extern<S, A, Q>,
+        _address: &HumanAddr,
+        _config: &Config,
+        _viewing_key: String,
+    ) -> StdResult<Option<u8>> {
+        let tier_lock = TIER.lock().unwrap();
+        Ok(Some(*tier_lock))
+    }
 }
 
 #[cfg(not(test))]
@@ -238,11 +248,17 @@ pub use query::get_tier;
 #[cfg(not(test))]
 pub use query::get_min_tier;
 
+#[cfg(not(test))]
+pub use query::get_tier_from_nft_contract;
+
 #[cfg(test)]
 pub use manual::get_tier;
 
 #[cfg(test)]
 pub use manual::get_min_tier;
+
+#[cfg(test)]
+pub use manual::get_tier_from_nft_contract;
 
 #[cfg(test)]
 mod tests {

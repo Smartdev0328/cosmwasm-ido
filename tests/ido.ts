@@ -55,7 +55,7 @@ describe("IDO", () => {
     (s, value) => s + Number.parseInt(value),
     0
   );
-
+  console.log(idoTotalAmount)
   let idoContract: Ido.IdoContract;
 
   const endpoint = "https://api.pulsar.scrttestnet.com";
@@ -95,7 +95,6 @@ describe("IDO", () => {
   it("Deploy IDO contract", async () => {
     admin = await getAdmin(endpoint, chainId);
     const validators = await admin.query.staking.validators({ status: "" });
-    console.log(validators)
     const validator = validators.validators![0].operator_address!;
     const initTierMsg: Tier.InitMsg = {
       validator,
@@ -127,9 +126,8 @@ describe("IDO", () => {
     price = 10;
 
     const time = currentTime();
-    const startTime = time + 30;
-    const endTime = startTime + 180;
-
+    const startTime = time + 20;
+    const endTime = startTime + 280;
     const startIdoMsg: Ido.HandleMsg.StartIdo = {
       start_ido: {
         start_time: startTime,
@@ -179,7 +177,7 @@ describe("IDO", () => {
 
   it("Try to buy tokens before IDO starts", async () => {
     user = await getUser(endpoint, chainId, 1);
-    await mintTo(user, idoTotalAmount * price);
+    await mintTo(user, idoTotalAmount / price, paymentToken);
 
     await assert.rejects(
       async () => {
@@ -204,7 +202,7 @@ describe("IDO", () => {
       const tierIndex = tier - 1;
       const tokensAmount = Number.parseInt(tokensPerTier[tierIndex]);
 
-      const initialIdoOwnerBalance = await paymentToken.getBalance(idoOwner);
+      const initialUserBalance = await paymentToken.getBalance(user);
       await checkMaxDeposit(user, idoContract, idoId, tokensAmount);
 
       const totalTokensBought = tokensPerTier
@@ -221,8 +219,8 @@ describe("IDO", () => {
       const userInfoIdo = await idoContract.userInfo(user, idoId);
       assert.deepEqual(userInfo, userInfoIdo);
 
-      const balance = await paymentToken.getBalance(idoOwner);
-      assert.equal(balance - initialIdoOwnerBalance, tokensAmount * price);
+      const balance = await paymentToken.getBalance(user);
+      assert.equal(initialUserBalance - balance, tokensAmount / price);
 
       const idoInfo = await idoContract.idoInfo(idoOwner, idoId);
       assert.equal(idoInfo.ido_info.total_payment, totalPayment);
@@ -329,7 +327,7 @@ describe("IDO", () => {
     const tier = 3;
     const tierIndex = tier - 1;
     const tokensAmount = Number.parseInt(tokensPerTier[tierIndex]);
-    const mintAmount = tokensAmount * price;
+    const mintAmount = tokensAmount / price;
 
     user = await getUser(endpoint, chainId, 2);
     await mintTo(user, mintAmount);
