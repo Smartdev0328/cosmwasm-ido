@@ -60,22 +60,17 @@ export class IdoContract extends BaseContract {
     client: SecretNetworkClient,
     idoId: number,
     amount: number,
-    token_id?: string
+    is_nft_tier?: boolean,
   ): Promise<Ido.HandleAnswer.BuyTokens> {
     const messages = [];
-    let token: NftToken | undefined;
-    if (token_id != null) {
-      token = {
-        token_id,
-        viewing_key: "random key",
-      };
-
+    let viewing_key: string | undefined;
+    if (is_nft_tier) {
+      viewing_key = "random key";
       const setViewingKey = getExecuteMsg<Snip721.HandleMsg.SetViewingKey>(
         this.nftContract,
         client.address,
-        { set_viewing_key: { key: token.viewing_key } }
+        { set_viewing_key: { key: viewing_key } }
       );
-
       messages.push(setViewingKey);
     }
 
@@ -90,12 +85,12 @@ export class IdoContract extends BaseContract {
     const buyTokensMsg = getExecuteMsg<Ido.HandleMsg.BuyTokens>(
       this.contractInfo,
       client.address,
-      { buy_tokens: { ido_id: idoId, amount: amount.toString(), token } },
+      { buy_tokens: { ido_id: idoId, amount: amount.toString(), viewing_key } },
       sentFunds
     );
 
     messages.push(buyTokensMsg);
-    const response = await broadcastWithCheck(client, messages, 200_000);
+    const response = await broadcastWithCheck(client, messages);
     return response[messages.length - 1] as Ido.HandleAnswer.BuyTokens;
   }
 

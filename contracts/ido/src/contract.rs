@@ -294,7 +294,7 @@ fn buy_tokens<S: Storage, A: Api, Q: Querier>(
 
     let config = Config::load(&deps.storage)?;
     let tier = if utils::in_whitelist(deps, &sender, ido_id)? {
-        get_tier(deps, sender.clone(), viewing_key)?
+        get_tier(deps, sender.clone(), viewing_key.clone())?
     } else {
         config.min_tier
     };
@@ -443,6 +443,15 @@ fn recv_tokens<S: Storage, A: Api, Q: Querier>(
                 token_contract,
             )?
         };
+        user_info.total_tokens_received = 0;
+
+        user_ido_info.total_tokens_received = 0;
+
+        all_user_infos.insert(&mut deps.storage, &canonical_sender, &user_info)?;
+        all_user_infos_in_ido.insert(&mut deps.storage, &ido_id, &user_ido_info)?;
+
+        let active_ido_list = state::active_ido_list(&canonical_sender);
+        active_ido_list.remove(&mut deps.storage, &ido_id)?;
         let answer = to_binary(&HandleAnswer::RecvTokens {
             amount: Uint128(user_info.total_payment),
             status: ResponseStatus::Success,

@@ -66,7 +66,7 @@ export type BuyTokens = {
     amount: Uint128;
     ido_id: number;
     padding?: string | null;
-    token?: NftToken | null;
+    viewing_key?: String | null;
   };
 };
 
