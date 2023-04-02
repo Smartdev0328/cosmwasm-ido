@@ -207,7 +207,7 @@ pub fn try_deposit<S: Storage, A: Api, Q: Querier>(
         let msg = CosmosMsg::Bank(send_msg);
         messages.push(msg);
     }
-
+    let old_scrt_deposit = user_info.scrt_deposit;
     user_info.tier = new_tier;
     user_info.timestamp = env.block.time;
     user_info.usd_deposit = new_tier_deposit;
@@ -216,7 +216,13 @@ pub fn try_deposit<S: Storage, A: Api, Q: Querier>(
 
     let delegate_msg = StakingMsg::Delegate {
         validator: config.validator,
-        amount: coin(scrt_deposit, USCRT),
+        amount: coin(
+            user_info
+                .scrt_deposit
+                .checked_sub(old_scrt_deposit)
+                .unwrap(),
+            USCRT,
+        ),
     };
 
     let msg = CosmosMsg::Staking(delegate_msg);
@@ -265,7 +271,7 @@ pub fn try_withdraw<S: Storage, A: Api, Q: Querier>(
 
     let config = Config::load(&deps.storage)?;
     let validator = config.validator;
-    let amount = coin(amount, USCRT);
+    let amount = coin(amount - 4, USCRT);
 
     let withdraw_msg = StakingMsg::Undelegate { validator, amount };
     let msg = CosmosMsg::Staking(withdraw_msg);

@@ -31,7 +31,6 @@ export async function broadcastWithCheck(
   if (transaction.code != 0) {
     throw new Error(transaction.rawLog);
   }
-
   return transaction.data.map((d) => {
     const response = Buffer.from(d).toString("utf8");
     const index = response.indexOf("{");

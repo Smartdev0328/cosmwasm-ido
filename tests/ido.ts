@@ -55,7 +55,6 @@ describe("IDO", () => {
     (s, value) => s + Number.parseInt(value),
     0
   );
-  console.log(idoTotalAmount)
   let idoContract: Ido.IdoContract;
 
   const endpoint = "https://api.pulsar.scrttestnet.com";
@@ -78,7 +77,6 @@ describe("IDO", () => {
       idoContract.contractInfo.address,
       amount
     );
-    console.log(res);
   };
 
   nftContract.setContractInfo({
@@ -325,7 +323,6 @@ describe("IDO", () => {
     idoId = response.start_ido.ido_id;
 
     const idoInfo = await idoContract.idoInfo(idoOwner, idoId);
-    console.log(idoInfo)
     assert.equal(idoInfo.ido_info.shared_whitelist, true);
   });
 
@@ -337,10 +334,8 @@ describe("IDO", () => {
     const mintAmount = idoTotalAmount / price;
 
     // const tierUserInfo = await tierContract.userInfo(user);
-    console.log(mintAmount)
     await mintTo(user, mintAmount, paymentToken);
     const userInfo = await idoContract.userInfo(user);
-    console.log(userInfo);
     await idoContract.addWhitelist(idoOwner, user.address, idoId);
 
     const mintResponse = await nftContract.mint(admin, {
@@ -557,13 +552,14 @@ describe("IDO", () => {
   });
 
   it("Buy some tokens", async () => {
-    user = await getUser(endpoint, chainId, 1);
+    user = await getUser(endpoint, chainId, 3);
+
     await idoContract.addWhitelist(idoOwner, user.address, idoId);
 
-    const initialIdoOwnerBalance = await getBalance(idoOwner);
+    const initialIdoOwnerBalance = await getBalance(user, idoContract.contractInfo.address);
     await idoContract.buyTokens(user, idoId, 1);
 
-    const balance = await getBalance(idoOwner);
+    const balance = await getBalance(user, idoContract.contractInfo.address);
     assert.equal(balance - initialIdoOwnerBalance, 1);
   });
 });
