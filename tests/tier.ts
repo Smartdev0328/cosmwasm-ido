@@ -205,17 +205,14 @@ describe("Tier", () => {
     let deposit = userInfo.user_info.scrt_deposit;
     await tierContract.withdraw(user);
     userInfo = await tierContract.userInfo(user);
-    console.log(userInfo)
     assert.equal(userInfo.user_info.tier, 5);
     assert.equal(userInfo.user_info.usd_deposit, 0);
     assert.equal(userInfo.user_info.scrt_deposit, 0);
     assert.equal(userInfo.user_info.timestamp, 0);
 
     const withdrawals = await tierContract.withdrawals(user);
-    console.log(withdrawals)
     const withdrawal = withdrawals.withdrawals.withdrawals[0];
     assert.equal(withdrawals.withdrawals.amount, 1);
-    console.log(withdrawal)
     assert.equal(withdrawal.amount, deposit);
 
     let currentDelegation: number;
