@@ -435,7 +435,7 @@ fn recv_tokens<S: Storage, A: Api, Q: Querier>(
             transfer_from_msg(
                 env.contract.address,
                 env.message.sender,
-                Uint128(user_info.total_payment),
+                Uint128(user_ido_info.total_payment),
                 None,
                 None,
                 BLOCK_SIZE,
