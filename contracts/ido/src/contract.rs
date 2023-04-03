@@ -426,7 +426,7 @@ fn recv_tokens<S: Storage, A: Api, Q: Querier>(
             CosmosMsg::Bank(BankMsg::Send {
                 from_address: env.contract.address,
                 to_address: env.message.sender,
-                amount: coins(user_info.total_payment, USCRT),
+                amount: coins(user_ido_info.total_payment, USCRT),
             })
         } else {
             let token_contract_canonical = ido.payment_token_contract.unwrap();
