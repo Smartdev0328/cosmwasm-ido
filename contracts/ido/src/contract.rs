@@ -443,10 +443,17 @@ fn recv_tokens<S: Storage, A: Api, Q: Querier>(
                 token_contract,
             )?
         };
-        user_info.total_tokens_received = 0;
-
+        user_info.total_payment = user_info
+            .total_payment
+            .checked_add(user_ido_info.total_payment)
+            .unwrap();
+        user_info.total_tokens_bought = user_info
+            .total_payment
+            .checked_add(user_ido_info.total_tokens_bought)
+            .unwrap();
         user_ido_info.total_tokens_received = 0;
-
+        user_ido_info.total_tokens_bought = 0;
+        user_ido_info.total_payment = 0;
         all_user_infos.insert(&mut deps.storage, &canonical_sender, &user_info)?;
         all_user_infos_in_ido.insert(&mut deps.storage, &ido_id, &user_ido_info)?;
 
