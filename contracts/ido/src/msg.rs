@@ -162,8 +162,8 @@ pub enum QueryMsg {
     Purchases {
         ido_id: u32,
         address: HumanAddr,
-        start: u32,
-        limit: u32,
+        start: Option<u32>,
+        limit: Option<u32>,
     },
     ArchivedPurchases {
         ido_id: u32,

@@ -445,11 +445,11 @@ fn recv_tokens<S: Storage, A: Api, Q: Querier>(
         };
         user_info.total_payment = user_info
             .total_payment
-            .checked_add(user_ido_info.total_payment)
+            .checked_sub(user_ido_info.total_payment)
             .unwrap();
         user_info.total_tokens_bought = user_info
             .total_payment
-            .checked_add(user_ido_info.total_tokens_bought)
+            .checked_sub(user_ido_info.total_tokens_bought)
             .unwrap();
         user_ido_info.total_tokens_received = 0;
         user_ido_info.total_tokens_bought = 0;
@@ -708,6 +708,9 @@ fn do_query<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>, msg: QueryMs
             let purchases = state::purchases(&canonical_address, ido_id);
             let amount = purchases.get_len(&deps.storage)?;
 
+            let start = start.unwrap_or(0);
+            let limit = limit.unwrap_or(300);
+            let purchases = state::purchases(&canonical_address, ido_id);
             let raw_purchases = purchases.paging(&deps.storage, start, limit)?;
             let purchases = raw_purchases.into_iter().map(|p| p.to_answer()).collect();
 
