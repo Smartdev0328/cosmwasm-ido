@@ -437,8 +437,7 @@ fn recv_tokens<S: Storage, A: Api, Q: Querier>(
             let token_contract_canonical = ido.payment_token_contract.unwrap();
             let token_contract_hash = ido.payment_token_hash.unwrap();
             let token_contract = deps.api.human_address(&token_contract_canonical)?;
-            transfer_from_msg(
-                env.contract.address,
+            transfer_msg(
                 env.message.sender,
                 Uint128(user_ido_info.total_payment),
                 None,
@@ -451,11 +450,11 @@ fn recv_tokens<S: Storage, A: Api, Q: Querier>(
         user_info.total_payment = user_info
             .total_payment
             .checked_sub(user_ido_info.total_payment)
-            .unwrap();
+            .unwrap_or_default();
         user_info.total_tokens_bought = user_info
             .total_payment
             .checked_sub(user_ido_info.total_tokens_bought)
-            .unwrap();
+            .unwrap_or_default();
         user_ido_info.total_tokens_received = 0;
         user_ido_info.total_tokens_bought = 0;
         user_ido_info.total_payment = 0;
@@ -627,8 +626,7 @@ fn withdraw<S: Storage, A: Api, Q: Querier>(
             let token_contract_canonical = ido.payment_token_contract.unwrap();
             let token_contract_hash = ido.payment_token_hash.unwrap();
             let token_contract = deps.api.human_address(&token_contract_canonical)?;
-            transfer_from_msg(
-                env.contract.address,
+            transfer_msg(
                 ido_admin,
                 payment_amount,
                 None,
