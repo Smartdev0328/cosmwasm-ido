@@ -137,7 +137,8 @@ pub enum HandleAnswer {
         ido_success: bool,
     },
     Withdraw {
-        amount: Uint128,
+        ido_amount: Uint128,
+        payment_amount: Uint128,
         status: ResponseStatus,
     },
 }

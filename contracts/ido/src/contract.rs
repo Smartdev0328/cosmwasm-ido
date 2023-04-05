@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::{
     msg::{
         ContractStatus, HandleAnswer, HandleMsg, InitMsg, PaymentMethod, QueryAnswer, QueryMsg,
@@ -196,6 +198,9 @@ fn start_ido<S: Storage, A: Api, Q: Querier>(
         ));
     }
 
+    if ido.price == 0 {
+        return Err(StdError::generic_err("Ido price should be initialized"));
+    }
     if env.block.time >= ido.end_time {
         return Err(StdError::generic_err("Ido ends in the past"));
     }
@@ -584,29 +589,66 @@ fn withdraw<S: Storage, A: Api, Q: Querier>(
     ido.withdrawn = true;
     ido.save(&mut deps.storage)?;
 
-    let remaining_tokens = Uint128::from(ido.remaining_tokens());
-    if remaining_tokens.is_zero() {
-        return Err(StdError::generic_err("Nothing to withdraw"));
+    let remaining_tokens: Uint128;
+    if ido.soft_cap > ido.sold_amount {
+        remaining_tokens = Uint128::from(ido.total_tokens_amount);
+    } else {
+        remaining_tokens = Uint128::from(ido.remaining_tokens());
     }
+    // if remaining_tokens.is_zero() {
+    //     return Err(StdError::generic_err("Nothing to withdraw"));
+    // }
 
     let ido_token_contract = deps.api.human_address(&ido.token_contract)?;
-    let transfer_tokens = transfer_msg(
-        ido_admin,
-        remaining_tokens,
-        None,
-        None,
-        BLOCK_SIZE,
-        ido.token_contract_hash,
-        ido_token_contract,
-    )?;
+
+    let mut msgs = vec![];
+    if !remaining_tokens.is_zero() {
+        let transfer_tokens = transfer_msg(
+            ido_admin.clone(),
+            remaining_tokens,
+            None,
+            None,
+            BLOCK_SIZE,
+            ido.token_contract_hash.clone(),
+            ido_token_contract,
+        )?;
+        msgs.push(transfer_tokens);
+    }
+    //withdraw payment tokens.
+    let payment_amount = Uint128(ido.sold_amount.checked_div(ido.price).unwrap());
+    if ido.sold_amount > 0 {
+        let payment_transfer_msg = if ido.is_native_payment() {
+            CosmosMsg::Bank(BankMsg::Send {
+                from_address: env.contract.address,
+                to_address: ido_admin,
+                amount: coins(ido.sold_amount.checked_div(ido.price).unwrap(), USCRT),
+            })
+        } else {
+            let token_contract_canonical = ido.payment_token_contract.unwrap();
+            let token_contract_hash = ido.payment_token_hash.unwrap();
+            let token_contract = deps.api.human_address(&token_contract_canonical)?;
+            transfer_from_msg(
+                env.contract.address,
+                ido_admin,
+                payment_amount,
+                None,
+                None,
+                BLOCK_SIZE,
+                token_contract_hash,
+                token_contract,
+            )?
+        };
+        msgs.push(payment_transfer_msg)
+    }
 
     let answer = to_binary(&HandleAnswer::Withdraw {
-        amount: remaining_tokens,
+        ido_amount: remaining_tokens,
+        payment_amount: payment_amount,
         status: ResponseStatus::Success,
     })?;
 
     Ok(HandleResponse {
-        messages: vec![transfer_tokens],
+        messages: msgs,
         data: Some(answer),
         ..Default::default()
     })
@@ -2149,10 +2191,11 @@ mod tests {
         ido.admin = canonical_ido_admin;
         ido.total_tokens_amount = 100;
         ido.sold_amount = 30;
+        ido.price = 2;
         ido.token_contract = canonical_token_contract;
 
         let withdraw_amount = ido.total_tokens_amount - ido.sold_amount;
-
+        let withdraw_payment_amount = ido.sold_amount.checked_div(ido.price).unwrap();
         let ido_id = ido.save(&mut deps.storage).unwrap();
         let withdraw_msg = HandleMsg::Withdraw {
             ido_id,
@@ -2184,8 +2227,13 @@ mod tests {
         env.block.time = 1000;
         let response = handle(&mut deps, env.clone(), withdraw_msg.clone()).unwrap();
         match from_binary(&response.data.unwrap()).unwrap() {
-            HandleAnswer::Withdraw { amount, status } => {
-                assert_eq!(amount, Uint128(withdraw_amount));
+            HandleAnswer::Withdraw {
+                ido_amount,
+                payment_amount,
+                status,
+            } => {
+                assert_eq!(ido_amount, Uint128(withdraw_amount));
+                assert_eq!(payment_amount, Uint128(withdraw_payment_amount));
                 assert_eq!(status, ResponseStatus::Success);
             }
             _ => unreachable!(),
@@ -2202,40 +2250,11 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(response.messages.len(), 1);
+        assert_eq!(response.messages.len(), 2);
         assert_eq!(response.messages[0], expected_message);
 
         let response = handle(&mut deps, env, withdraw_msg);
         let error = extract_error(response);
         assert!(error.contains("Already withdrawn"));
-    }
-
-    #[test]
-    fn withdraw_zero_tokens() {
-        let msg = get_init_msg();
-        let mut deps = initialize_with(msg).unwrap();
-
-        let ido_admin = HumanAddr::from("ido_admin");
-        let canonical_ido_admin = deps.api.canonical_address(&ido_admin).unwrap();
-
-        let mut ido = Ido::default();
-        ido.start_time = 100;
-        ido.end_time = 1000;
-        ido.admin = canonical_ido_admin;
-        ido.total_tokens_amount = 100;
-        ido.sold_amount = 100;
-
-        let ido_id = ido.save(&mut deps.storage).unwrap();
-        let withdraw_msg = HandleMsg::Withdraw {
-            ido_id,
-            padding: None,
-        };
-
-        let mut env = mock_env(ido_admin, &[]);
-        env.block.time = 1000;
-
-        let response = handle(&mut deps, env, withdraw_msg);
-        let error = extract_error(response);
-        assert!(error.contains("Nothing to withdraw"));
     }
 }
