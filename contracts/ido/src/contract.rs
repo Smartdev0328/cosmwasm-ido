@@ -589,7 +589,7 @@ fn withdraw<S: Storage, A: Api, Q: Querier>(
     ido.save(&mut deps.storage)?;
 
     let remaining_tokens: Uint128;
-    if ido.soft_cap > ido.sold_amount {
+    if ido.soft_cap >= ido.sold_amount {
         remaining_tokens = Uint128::from(ido.total_tokens_amount);
     } else {
         remaining_tokens = Uint128::from(ido.remaining_tokens());
@@ -615,7 +615,7 @@ fn withdraw<S: Storage, A: Api, Q: Querier>(
     }
     //withdraw payment tokens.
     let payment_amount = Uint128(ido.sold_amount.checked_div(ido.price).unwrap());
-    if ido.sold_amount > 0 {
+    if ido.sold_amount >= ido.soft_cap {
         let payment_transfer_msg = if ido.is_native_payment() {
             CosmosMsg::Bank(BankMsg::Send {
                 from_address: env.contract.address,
